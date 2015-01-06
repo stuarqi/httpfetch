@@ -2,10 +2,20 @@ var http = require('http'),
     https = require('https'),
     urlLib = require('url');
 
+/**
+ * 判断指定对象是否为简单对象（对象字面量）
+ * @param obj
+ * @returns {boolean}
+ */
 function isPlainObject(obj) {
-
+    return obj && typeof obj === 'object' && obj.toString() === '[object Object]'
 }
 
+/**
+ * 扩展指定的对象
+ * @param {object} target 被扩展的对象
+ * @returns {object} 扩展后的对象
+ */
 function extend(target) {
     var p,
         args = Array.prototype.slice.call(arguments, 1);
@@ -22,8 +32,13 @@ function extend(target) {
             }
         }
     });
+    return target;
 }
 
+/**
+ * 返回默认设置
+ * @returns {{hostname: string, port: number, path: string, method: string, headers: object}}
+ */
 function getDefaultOptions() {
     return {
         hostname : '',
@@ -34,6 +49,12 @@ function getDefaultOptions() {
     };
 }
 
+/**
+ * 将对象序列化为参数字符串
+ * @param {object} obj 待序列化对象
+ * @param {string} [joiner='&'] 参数连接符
+ * @returns {string}
+ */
 function serialize(obj, joiner) {
     var p, arr = [];
     for (p in obj) {
@@ -44,6 +65,10 @@ function serialize(obj, joiner) {
     return arr.join(joiner || '&');
 }
 
+/**
+ * 返回默认请求头
+ * @returns {{Accept: string, Accept-Encoding: string, Accept-Language: string, Cache-Control: string, Connection: string, Cookie: string, Pragma: string, User-Agent: string}}
+ */
 function getDefaultHeaders() {
     return {
         'Accept' : 'text/html,application/xhtml+xml',
@@ -57,6 +82,10 @@ function getDefaultHeaders() {
     };
 }
 
+/**
+ * Web内容拉取类
+ * @constructor
+ */
 function HttpFetch() {
     this._opts = getDefaultOptions();
     this._charCode = 'utf8';
@@ -131,9 +160,19 @@ HttpFetch.prototype = {
         this._charCode = charcode || 'utf8';
     },
 
+    /**
+     * 拉取指定的Web内容
+     * @param {string} url 需要拉取数据URL
+     * @param {object} [opts] 设置
+     * @param {function} fn 数据拉取完成后的回调方法
+     */
     fetch : function (url, opts, fn) {
         var urlObj = urlLib.parse(url),
             protocol = urlObj.protocol;
+        if (!fn) {
+            fn = opts;
+            opts = {};
+        }
         opts['hostname'] = urlObj['hostname'];
         opts['port'] = parseInt(urlObj['port']) || opts['port'];
         opts['path'] = urlObj['path'];
