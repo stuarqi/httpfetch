@@ -1,0 +1,26 @@
+{
+  "name": "http-fetch",
+  "version": "0.1.0",
+  "description": "Http way to fetch the content of the specified URL",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stuarqi/httpfetch.git"
+  },
+  "keywords": [
+    "http",
+    "fetch"
+  ],
+  "author": "zhangsq",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stuarqi/httpfetch/issues"
+  },
+  "homepage": "https://github.com/stuarqi/httpfetch",
+  "dependencies": {
+    "iconv-lite": "^0.4.5"
+  }
+}
