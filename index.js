@@ -177,7 +177,25 @@ HttpFetch.prototype = {
         opts['port'] = parseInt(urlObj['port']) || opts['port'];
         opts['path'] = urlObj['path'];
         this.setOptions(opts);
+    },
 
+    _request : function (protocol, fn) {
+        this._getHttp(protocol).request(this._opts, function (res) {
+
+        });
+    },
+
+    _getHttp : function (protocol) {
+        var httpObj;
+        switch (protocol) {
+            case 'http:':
+                httpObj = http;
+                break;
+            case 'https:':
+                httpObj = https;
+                break;
+        }
+        return httpObj;
     },
 
 
