@@ -1,6 +1,14 @@
 var http = require('http'),
     https = require('https'),
-    urlLib = require('url');
+    urlLib = require('url'),
+    iconv = require('iconv-lite'),
+    zlib = require('zlib');
+
+var httpObject = {
+    'http:' : http,
+    'https:' : https
+},
+    charsetReg = /Charset=(.*)$/;
 
 /**
  * 判断指定对象是否为简单对象（对象字面量）
@@ -166,10 +174,11 @@ HttpFetch.prototype = {
      * @param {object} [opts] 设置
      * @param {function} fn 数据拉取完成后的回调方法
      */
-    fetch : function (url, opts, fn) {
+    fetch : function (url, opts, fn, data) {
         var urlObj = urlLib.parse(url),
             protocol = urlObj.protocol;
-        if (!fn) {
+        if (!isPlainObject(opts)) {
+            data = fn;
             fn = opts;
             opts = {};
         }
@@ -177,32 +186,55 @@ HttpFetch.prototype = {
         opts['port'] = parseInt(urlObj['port']) || opts['port'];
         opts['path'] = urlObj['path'];
         this.setOptions(opts);
+        this._request(protocol, fn, data);
     },
 
-    _request : function (protocol, fn) {
-        this._getHttp(protocol).request(this._opts, function (res) {
-
-        });
-    },
-
-    _getHttp : function (protocol) {
-        var httpObj;
-        switch (protocol) {
-            case 'http:':
-                httpObj = http;
-                break;
-            case 'https:':
-                httpObj = https;
-                break;
+    _request : function (protocol, fn, data) {
+        this._content = '';
+        var req = httpObject[protocol].request(this._opts, function (res) {
+            this._getCharset(res.headers['content-type']);
+            var convertStream = this._getConvertStream();
+            if (res.headers['content-encoding'] === 'gzip') {
+                res.pipe(zlib.createGunzip()).pipe(convertStream);
+            } else {
+                res.pipe(convertStream);
+            }
+            convertStream.on('data', this._onData.bind(this));
+            convertStream.on('end', this._onEnd.bind(this, fn));
+            convertStream.on('error', this._onError.bind(this, fn));
+        }.bind(this));
+        if (data) {
+            req.write(serialize(data));
         }
-        return httpObj;
+        req.end();
+    },
+
+    _getConvertStream : function () {
+        return iconv.decodeStream(this._charCode === 'gb2312' ? 'gbk' : this._charCode);
+    },
+
+    _getCharset : function(contentType) {
+        var match;
+        console.log(contentType);
+        console.log(contentType.match(charsetReg));
+        if (match = contentType.match(charsetReg)) {
+            this._charCode = match[1];
+        }
     },
 
 
 
-    _onData : function () {},
+    _onData : function (str) {
+        this._content += str;
+    },
 
-    _onEnd : function () {}
+    _onEnd : function (fn) {
+        fn(null, this._content);
+    },
+
+    _onError : function (fn, err) {
+        fn(err);
+    }
 };
 
 module.exports = HttpFetch;
